@@ -1,0 +1,14 @@
+{
+    "window_size": 0.25,
+    "desired_frequency": 25,
+    "default_output_dir": "./output",
+    "max_depth": 1,
+    "input_button_font_size": 16,
+    "input_button_padding": 10,
+    "output_button_font_size": 16,
+    "output_button_padding": 10,
+    "process_button_font_size": 18,
+    "process_button_padding": 12,
+    "log_text_read_only": true,
+    "window_geometry": [100, 100, 600, 600]
+}
