@@ -58,5 +58,6 @@ This script will ensure that all dependencies are installed.
 Once installed, run the application using the following command:
 
 ```bash
+cd app
 python3 main.py
 ```

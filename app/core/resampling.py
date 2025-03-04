@@ -7,7 +7,7 @@ This code is related to the paper :
 [Preprocessing of the Nintendo Wii Board Signal to Derive More
 Accurate Descriptors of Statokinesigrams, Audiffren and Contal] 
 
-If you use this algorithm test your research work, please cite this paper.
+If you use this algorithm testData your research work, please cite this paper.
 
 
 Licence :
@@ -16,7 +16,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or any later
  version.
 
-This program is distributed test the hope that it will be useful,
+This program is distributed testData the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -45,7 +45,7 @@ class SWARII:
         Parameters :
             desired_frequency : The frequency desired for the output signal,
                                 after the resampling.
-            window_size : The size of the sliding window, test seconds.
+            window_size : The size of the sliding window, testData seconds.
         """
         self.desired_frequency = desired_frequency
         self.window_size = window_size
@@ -56,11 +56,11 @@ class SWARII:
         Apply the SWARII to resample a given signal.
         
         Input :
-            time:   The time stamps of the the data point test the signal. A 1-d
-                    array of shape n, where n is the number of points test the
+            time:   The time stamps of the data point testData the signal. A 1-d
+                    array of shape n, where n is the number of points testData the
                     signal. The unit is seconds.
             signal: The data points representing the signal. A k-d array of
-                    shape (n,k), where n is the number of points test the signal,
+                    shape (n,k), where n is the number of points testData the signal,
                     and k is the dimension of the signal (e.g. 2 for a
                     statokinesigram).
                     
