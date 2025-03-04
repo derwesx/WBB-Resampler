@@ -1,6 +1,6 @@
-# File Resampler Application
+# WBB Resampler
 
-This application resamples data files in `.wbb` format using a specified resampling method (SWARII). It is designed with a simple GUI to select input and output folders and process files.
+This application resamples data files in `Nintendo Wii Balance Board (WBB)` format using a specified resampling method (SWARII). It is designed with a simple GUI to select input and output folders and process files.
 
 ## Prerequisites
 
@@ -13,45 +13,52 @@ Before you install the application, make sure you have the following:
 
 ## Installation
 
-### For Linux/Mac
+1. Open the terminal, Command Prompt, or PowerShell (Windows).
 
-1. Open the terminal.
 2. Clone the repository:
     ```bash
    git clone https://github.com/derwesx/LDM.git
    cd LDM
     ```
+
+### For Linux/Mac
+
 3. Run the installation script:
 
-    Linux 
-    ```bash
-    chmod +x ./install/install_linux.sh
-    ./install/install_linux.sh
-    ```
-    Mac:
-    ```bash
-    chmod +x ./install/install_mac.sh
-    ./install/install_mac.sh
-   ```
-This will install the required dependencies for running the application.
+```bash
+#!/bin/bash
 
-### For Windows
-Open PowerShell or Command Prompt.
+# Detect the OS and install accordingly
+OS="$(uname -s)"
 
-Clone the repository:
+case "$OS" in
+    Linux*)
+        echo "Detected Linux. Running installation..."
+        chmod +x ./install/install_linux.sh
+        ./install/install_linux.sh
+        ;;
+    Darwin*)
+        echo "Detected macOS. Running installation..."
+        chmod +x ./install/install_mac.sh
+        ./install/install_mac.sh
+        ;;
+    *)
+        echo "Unsupported OS: $OS"
+        exit 1
+        ;;
+esac
 
-```powershell
-git clone https://github.com/derwesx/LDM.git
-cd LDM
 ```
 
-Run the installation script:
+### For Windows
+
+3. Run the installation script:
     
 ```powershell
 .\install\install_windows.bat
 ```
 
-This script will ensure that all dependencies are installed.
+This will install the required dependencies for running the application.
 
 ## Usage
 
@@ -61,3 +68,6 @@ Once installed, run the application using the following command:
 cd app
 python3 main.py
 ```
+
+## References
+Audiffren, J., & Contal, E. (2016). Preprocessing the Nintendo Wii Board Signal to Derive More Accurate Descriptors of Statokinesigrams. *Sensors (Basel)*, *16*(8), 1208. [https://doi.org/10.3390/s16081208](https://doi.org/10.3390/s16081208). PMID: [27490545](https://pubmed.ncbi.nlm.nih.gov/27490545/); PMCID: [PMC5017374](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5017374/).
