@@ -1,6 +1,6 @@
 # WBB Resampler
 
-This application resamples data files in `Nintendo Wii Balance Board (WBB)` format using a specified resampling method (SWARII). It is designed with a simple GUI to select input and output folders and process files.
+This application resamples data files in **Nintendo Wii Balance Board (WBB)** format using a specified resampling method **(SWARII)**. It is designed with a simple GUI to select input and output folders and process files.
 
 ## Prerequisites
 
