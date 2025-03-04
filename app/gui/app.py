@@ -97,8 +97,8 @@ class FileProcessorApp(QWidget):
 
         self.status_label.setText("Processing completed!")
 
-    def update_log(self, message):
+    def update_log(self, message, color="black"):
         """Add a timestamped message to the log"""
         timestamp = datetime.now().strftime('%d:%H:%M:%S')
-        log_message = f"[{timestamp}] {message}"
+        log_message = f'[{timestamp}] <span style="color:{color}">{message}</span>'
         self.log_text.append(log_message)

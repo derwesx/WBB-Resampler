@@ -19,6 +19,7 @@ def parse_wbb_file(file_address):
         f.readline()
         f.readline()
 
+        maxDelta = 0.
         for line in f:
             if line.strip():  # Skip empty lines
                 data = line.split(" ")
@@ -26,6 +27,8 @@ def parse_wbb_file(file_address):
                 x = float(data[5])
                 y = float(data[6])
                 time.append(t)
+                if len(time) > 1:
+                    maxDelta = max(maxDelta, time[-1] - time[-2])
                 signal.append([x, y])
-
+        print(f"MaxDelta in {file_address}: ", maxDelta)
     return np.array(time), np.array(signal)

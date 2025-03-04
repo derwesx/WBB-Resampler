@@ -23,7 +23,7 @@ class FileProcessor:
                 log_path = f"{base_folder}"
 
             if log_callback:
-                log_callback(f"Walking | Current -> {log_path}")
+                log_callback(f"Walking | Current -> {log_path}", color="blue")
 
             # Skip if we've gone too deep in the directory structure
             current_depth = root.count(os.sep) - base_depth
@@ -65,7 +65,7 @@ class FileProcessor:
 
             # Process the file
             time, signal = parse_wbb_file(file_path)
-            resampled_time, resampled_signal = self.resampling_method.resample(time, signal)
+            resampled_time, resampled_signal, empty_windows, skipped_time = self.resampling_method.resample(time, signal)
             resampled_combined = np.column_stack((resampled_time, resampled_signal))
 
             # Save the result
@@ -74,8 +74,14 @@ class FileProcessor:
                 np.savetxt(f, resampled_combined, fmt="%.9f", delimiter=" ")
 
             if log_callback:
-                log_callback(f"Processed {log_path}")
-                log_callback(f"Saved to {output_path}")
+                if empty_windows > 0 or skipped_time > 0.:
+                    log_callback(f"Processed {log_path}", color="red")
+                    log_callback(f"Empty windows: {empty_windows}", color="red")
+                    log_callback(f"Skipped time due to lack of data: {skipped_time}", color="red")
+                    log_callback(f"Saved to {output_path}", color="green")
+                else:
+                    log_callback(f"Processed {log_path}")
+                    log_callback(f"Saved to {output_path}", color="green")
 
         except Exception as e:
             if log_callback:

@@ -26,6 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+"""
+Edited by: Serafim Lobanov
+"""
+
 import numpy as np
 
 class SWARII:
@@ -73,18 +77,21 @@ class SWARII:
         current_time = max(0.,time[0]) 
         output_time=[]
         output_signal = []
+        empty_windows, skipped_time = 0, 0.
 
         while current_time < time[-1]:
 
             relevant_times = [t for t in range(len(time)) if abs(
                 time[t] - current_time) < self.window_size * 0.5]
-                
-            assert len(relevant_times) > 0,"Trying to interpolate an empty window !"
 
-            if len(relevant_times) == 1:
+            if len(relevant_times) == 0:
+                empty_windows += 1
+                skipped_time += 1. / self.desired_frequency
+
+            elif len(relevant_times) == 1:
                 value = a_signal[relevant_times[0]]
                 
-            else :
+            elif len(relevant_times) > 1:
                 value = 0
                 weight = 0
         
@@ -113,8 +120,11 @@ class SWARII:
                         
       
                 value /= weight
-            output_time.append(current_time)
-            output_signal.append(value)
+
+            if len(relevant_times):
+                output_time.append(current_time)
+                output_signal.append(value)
+
             current_time += 1. / self.desired_frequency
 
-        return np.array(output_time),np.array(output_signal)
+        return np.array(output_time),np.array(output_signal),empty_windows,skipped_time
