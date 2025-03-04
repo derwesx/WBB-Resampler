@@ -71,13 +71,17 @@ class FileProcessorApp(QWidget):
 
     def select_input_folder(self):
         self.input_dir = QFileDialog.getExistingDirectory(self, "Select Input Folder")
-        self.status_label.setText(f"Selected Input Folder: {self.input_dir}")
-        self.update_log(f"Input Folder Selected: {self.input_dir}")
+        if self.input_dir:
+            self.input_button.setText(f"Input: {self.input_dir}")
+            self.status_label.setText(f"Selected Input Folder: {self.input_dir}")
+            self.update_log(f"Input Folder Selected: {self.input_dir}")
 
     def select_output_folder(self):
         self.output_dir = QFileDialog.getExistingDirectory(self, "Select Output Folder")
-        self.status_label.setText(f"Selected Output Folder: {self.output_dir}")
-        self.update_log(f"Output Folder Selected: {self.output_dir}")
+        if self.output_dir:
+            self.output_button.setText(f"Output: {self.output_dir}")
+            self.status_label.setText(f"Selected Output Folder: {self.output_dir}")
+            self.update_log(f"Output Folder Selected: {self.output_dir}")
 
     def process_files(self):
         """Start file processing"""

@@ -1,7 +1,7 @@
 {
     "window_size": 0.25,
     "desired_frequency": 25,
-    "default_output_dir": "./output",
+    "default_output_dir": "./",
     "max_depth": 1,
     "input_button_font_size": 16,
     "input_button_padding": 10,
