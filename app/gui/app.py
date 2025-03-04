@@ -89,7 +89,9 @@ class FileProcessorApp(QWidget):
             self.status_label.setText("Please select an input folder.")
             return
 
-        self.log_text.clear()  # Clear previous logs
+        # Optional: Clear previous logs
+        # self.log_text.clear()
+
         self.update_log("Starting file processing...")
 
         self.processor.process_files(
