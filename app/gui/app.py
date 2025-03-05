@@ -1,5 +1,7 @@
+import os
 from datetime import datetime
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFileDialog, QTextEdit
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
 from config.settings import Config
 from core.processor import FileProcessor
 
@@ -72,14 +74,14 @@ class FileProcessorApp(QWidget):
     def select_input_folder(self):
         self.input_dir = QFileDialog.getExistingDirectory(self, "Select Input Folder")
         if self.input_dir:
-            self.input_button.setText(f"Input: {self.input_dir}")
+            self.input_button.setText(f"Input: ...{self.input_dir[-self.config.max_text_length:] if len(self.input_dir) > self.config.max_text_length else self.input_dir}")
             self.status_label.setText(f"Selected Input Folder: {self.input_dir}")
             self.update_log(f"Input Folder Selected: {self.input_dir}")
 
     def select_output_folder(self):
         self.output_dir = QFileDialog.getExistingDirectory(self, "Select Output Folder")
         if self.output_dir:
-            self.output_button.setText(f"Output: {self.output_dir}")
+            self.output_button.setText(f"Output: ...{self.output_dir[-self.config.max_text_length:] if len(self.output_dir) > self.config.max_text_length else self.output_dir}")
             self.status_label.setText(f"Selected Output Folder: {self.output_dir}")
             self.update_log(f"Output Folder Selected: {self.output_dir}")
 
@@ -89,22 +91,60 @@ class FileProcessorApp(QWidget):
             self.status_label.setText("Please select an input folder.")
             return
 
+        if not self.output_dir:
+            self.update_log("Output folder not selected.", color="red")
+            self.output_dir = os.path.expanduser(self.config.default_output_dir)
+            self.output_button.setText(f"Output: ...{self.output_dir[-self.config.max_text_length:] if len(self.output_dir) > self.config.max_text_length else self.output_dir}")
+            self.update_log(f"Default: {self.output_dir}", color="red")
+            self.update_log(f"New output folder: {os.path.abspath(self.output_dir)}", color="red")
         # Optional: Clear previous logs
         # self.log_text.clear()
 
         self.update_log("Starting file processing...")
 
+        # Create a QThread object
+        self.thread = QThread()
+        # Create a worker object
+        self.worker = FileProcessorWorker(self.processor, self.input_dir, self.output_dir, self.config)
+        # Move the worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Connect signals and slots
+        self.thread.started.connect(self.worker.process)
+        self.worker.log_signal.connect(self.update_log)
+        self.worker.finished_signal.connect(self.thread.quit)
+        self.worker.finished_signal.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        # Start the thread
+        self.thread.start()
+
+        self.thread.finished.connect(lambda: self.status_label.setText("Processing completed!"))
+
+    def update_log(self, message, color="black"):
+            """Add a timestamped message to the log"""
+            timestamp = datetime.now().strftime('%d:%H:%M:%S')
+            log_message = f'[{timestamp}] <span style="color:{color}">{message}</span>'
+            self.log_text.append(log_message)
+
+class FileProcessorWorker(QObject):
+    log_signal = pyqtSignal(str, str)
+    finished_signal = pyqtSignal()
+
+    def __init__(self, processor, input_dir, output_dir, config):
+        super().__init__()
+        self.processor = processor
+        self.input_dir = input_dir
+        self.output_dir = output_dir
+        self.config = config
+
+    @pyqtSlot()
+    def process(self):
         self.processor.process_files(
             self.input_dir,
             self.output_dir,
             max_depth=self.config.max_depth,
-            log_callback=self.update_log
+            log_callback=self.log_callback
         )
+        self.finished_signal.emit()
 
-        self.status_label.setText("Processing completed!")
-
-    def update_log(self, message, color="black"):
-        """Add a timestamped message to the log"""
-        timestamp = datetime.now().strftime('%d:%H:%M:%S')
-        log_message = f'[{timestamp}] <span style="color:{color}">{message}</span>'
-        self.log_text.append(log_message)
+    def log_callback(self, message, color="black"):
+        self.log_signal.emit(message, color)

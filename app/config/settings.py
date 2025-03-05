@@ -29,3 +29,11 @@ class Config:
     @property
     def max_depth(self):
         return self._config.get("max_depth", 1)
+
+    @property
+    def max_text_length(self):
+        return self._config.get("max_text_length", 0)
+
+    @property
+    def default_output_dir(self):
+        return self._config.get("default_output_dir", os.path.expanduser('./resampled'))

@@ -13,15 +13,20 @@ Before you install the application, make sure you have the following:
 - **NumPy** for data handling
 - **resampling** package for data resampling (or make sure the custom `SWARII` class is installed and accessible)
 
-## Installation
+## Installation & Update
 
 1. Open the terminal, Command Prompt, or PowerShell (Windows).
 
 2. Clone the repository:
     ```bash
-   git clone https://github.com/derwesx/LDM.git
+   git clone https://github.com/derwesx/WBB-Resampler.git
    cd LDM
     ```
+3. To update the repository:
+   ```bash
+   cd LDM
+   git pull
+   ```
 
 ### For Linux/Mac
 
