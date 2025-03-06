@@ -79,6 +79,11 @@ Once installed, run the application using the following command:
 cd app
 python3 main.py
 ```
+or
+```bash
+cd app
+python main.py
+```
 
 ## References
 Audiffren, J., & Contal, E. (2016). Preprocessing the Nintendo Wii Board Signal to Derive More Accurate Descriptors of Statokinesigrams. *Sensors (Basel)*, *16*(8), 1208. [https://doi.org/10.3390/s16081208](https://doi.org/10.3390/s16081208). PMID: [27490545](https://pubmed.ncbi.nlm.nih.gov/27490545/); PMCID: [PMC5017374](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5017374/).
