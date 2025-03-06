@@ -59,7 +59,11 @@ esac
 
 ### For Windows
 
-3. Run the installation script:
+3.1. Install [Python](https://www.python.org/downloads/release/python-3113/)
+
+[Python 3.11](https://www.python.org/downloads/release/python-3113/)
+
+3.2. Run the installation script:
     
 ```powershell
 .\install\install_windows.bat
