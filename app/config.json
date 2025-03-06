@@ -11,5 +11,5 @@
     "process_button_font_size": 18,
     "process_button_padding": 12,
     "log_text_read_only": true,
-    "window_geometry": [100, 100, 600, 600]
+    "window_geometry": [100, 100, 800, 600]
 }
