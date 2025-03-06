@@ -8,12 +8,15 @@ class FileProcessor:
         self.resampling_method = resampling_method
         self.errors = []
 
-    def process_files(self, input_dir, output_dir, max_depth=1, log_callback=None):
+    def process_files(self, input_dir, output_dir, cut_option, x, y, max_depth=1, log_callback=None):
         """Process files from input directory and save to output directory"""
         self.errors = []  # Reset errors list
         base_depth = input_dir.rstrip(os.sep).count(os.sep)
 
-        log_callback("Starting processing:")
+        if log_callback:
+            log_callback(f"Cutting method chosen: {cut_option}", color="blue")
+            log_callback(f"X seconds: {x}, Y seconds: {y}", color="blue")
+            log_callback("Starting processing:")
         for root, _, files in os.walk(input_dir):
 
             base_folder = os.path.basename(input_dir.rstrip(os.sep))
@@ -31,13 +34,13 @@ class FileProcessor:
                 continue
 
             for file in files:
-                self._process_file(root, file, input_dir, output_dir, log_callback)
+                self._process_file(root, file, input_dir, output_dir, cut_option, x, y, log_callback)
 
         self._save_error_log()
         if log_callback:
             log_callback("Processing completed!")
 
-    def _process_file(self, root, file, input_dir, output_dir, log_callback):
+    def _process_file(self, root, file, input_dir, output_dir, cut_option, x, y, log_callback):
         file_path = os.path.join(root, file)
 
         # Create output path
@@ -66,6 +69,28 @@ class FileProcessor:
             # Process the file
             time, signal = parse_wbb_file(file_path)
             resampled_time, resampled_signal, empty_windows, skipped_time = self.resampling_method.resample(time, signal)
+
+            # Apply cutting logic
+            if log_callback:
+                log_callback(f"Cutting method: {cut_option}", color="blue")
+                log_callback(f"Original time range: {resampled_time[0]:.2f} to {resampled_time[-1]:.2f}", color="blue")
+            if cut_option == 1:
+                # Cut first X seconds and last Y seconds
+                mask = (resampled_time >= x+resampled_time[0]) & (resampled_time <= (resampled_time[-1] - y))
+                resampled_time = resampled_time[mask]
+                resampled_signal = resampled_signal[mask]
+                if log_callback:
+                    log_callback(f"Cutting first {x:.2f} seconds and last {y:.2f} seconds", color="blue")
+            elif cut_option == 2:
+                # Cut first X seconds and take Y seconds after
+                mask = (resampled_time >= x+resampled_time[0]) & (resampled_time <= (x + resampled_time[0] + y))
+                resampled_time = resampled_time[mask]
+                resampled_signal = resampled_signal[mask]
+                if log_callback:
+                    log_callback(f"Cutting first {x:.2f} seconds and taking {y:.2f} seconds after", color="blue")
+            if log_callback:
+                log_callback(f"New time range: {resampled_time[0]:.2f} to {resampled_time[-1]:.2f}", color="blue")
+
             resampled_combined = np.column_stack((resampled_time, resampled_signal))
 
             # Save the result
@@ -85,7 +110,8 @@ class FileProcessor:
 
         except Exception as e:
             if log_callback:
-                log_callback(f"Error processing {log_path}: {e}")
+                log_callback(f"Error processing file: {file_path}", color="red")
+                log_callback(f"Exception: {e}", color="red")
             self.errors.append(file_path)
 
     def _save_error_log(self):
