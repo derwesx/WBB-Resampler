@@ -20,11 +20,11 @@ Before you install the application, make sure you have the following:
 2. Clone the repository:
     ```bash
    git clone https://github.com/derwesx/WBB-Resampler.git
-   cd LDM
+   cd WBB-Resampler
     ```
 3. To update the repository:
    ```bash
-   cd LDM
+   cd WBB-Resampler
    git pull
    ```
 
