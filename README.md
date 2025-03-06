@@ -59,9 +59,9 @@ esac
 
 ### For Windows
 
-3.1. Install [Python](https://www.python.org/downloads/release/python-3113/)
+3.1. Download & Install [Python](https://www.python.org/ftp/python/3.11.3/python-3.11.3-amd64.exe)
 
-[Python 3.11](https://www.python.org/downloads/release/python-3113/)
+[Python 3.11](https://www.python.org/ftp/python/3.11.3/python-3.11.3-amd64.exe)
 
 3.2. Run the installation script:
     
