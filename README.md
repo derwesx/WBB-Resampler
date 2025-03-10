@@ -63,6 +63,9 @@ esac
 
 [Python 3.11](https://www.python.org/ftp/python/3.11.3/python-3.11.3-amd64.exe)
 
+#### Don't forget to add python to PATH
+![Adding to Path](assets/path.png)
+
 3.2. Run the installation script:
     
 ```powershell
