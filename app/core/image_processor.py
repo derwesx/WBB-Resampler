@@ -19,8 +19,7 @@ class ImageProcessor:
             df = pd.read_csv(file_path, sep=r'\s+', skiprows=1,
                              names=['Time', 'X', 'Y'])
 
-            # TODO: There's some magic's happening here
-            # Normalize time to start from 0
+            # Normalize time to start from 0 & Center the data
             df['Time'] = df['Time'] - df['Time'].min()
             df['X'] = df['X'] - df['X'].mean()
             df['Y'] = df['Y'] - df['Y'].mean()
@@ -40,8 +39,8 @@ class ImageProcessor:
             # Make the plot square with equal limits
             x_lim = max(df['X'].max(), abs(df['X'].min()))
             y_lim = max(df['Y'].max(), abs(df['Y'].min()))
-            x_lim = max(x_lim, 1)
-            y_lim = max(y_lim, 1)
+            x_lim = max(x_lim, 1) + 0.5
+            y_lim = max(y_lim, 1) + 0.5
             ax1.set_xlim(-x_lim, x_lim)
             ax1.set_ylim(-y_lim, y_lim)
             ax1.set_aspect('equal')  # Make the plot square

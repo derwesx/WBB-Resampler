@@ -1,4 +1,5 @@
 import os
+import random
 from datetime import datetime
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFileDialog, QTextEdit, \
     QRadioButton, QLineEdit
@@ -35,7 +36,7 @@ class ProcessorApp(QWidget):
         self._create_cutting_options(cut_layout)
         main_layout.addLayout(cut_layout)
 
-        self._create_process_button(main_layout)
+        self._create_process_buttons(main_layout)
         self._create_status_and_log(main_layout)
 
         self.setLayout(main_layout)
@@ -92,14 +93,13 @@ class ProcessorApp(QWidget):
         self.output_button.clicked.connect(self.select_output_folder)
         layout.addWidget(self.output_button)
 
-    def _create_process_button(self, layout):
+    def _create_process_buttons(self, layout):
         self.process_button = QPushButton("Process Files")
         self.process_button.setStyleSheet(
             f"font-size: {self.config.get('process_button_font_size')}px; "
             f"padding: {self.config.get('process_button_padding')}px;"
         )
         self.process_button.clicked.connect(self.process_files)
-        layout.addWidget(self.process_button)
 
         self.image_button = QPushButton("Generate Images")
         self.image_button.setStyleSheet(
@@ -107,7 +107,19 @@ class ProcessorApp(QWidget):
             f"padding: {self.config.get('process_button_padding')}px;"
         )
         self.image_button.clicked.connect(self.generate_images)
-        layout.addWidget(self.image_button)
+
+        self.csv_button = QPushButton("Generate CSV file")
+        self.csv_button.setStyleSheet(
+            f"font-size: {self.config.get('process_button_font_size')}px; "
+            f"padding: {self.config.get('process_button_padding')}px;"
+        )
+        self.csv_button.clicked.connect(self.generate_csv)
+
+        cut_layout = QHBoxLayout()
+        cut_layout.addWidget(self.process_button)
+        cut_layout.addWidget(self.image_button)
+        cut_layout.addWidget(self.csv_button)
+        layout.addLayout(cut_layout)
 
     def _create_status_and_log(self, layout):
         # Status label
@@ -197,6 +209,31 @@ class ProcessorApp(QWidget):
 
         self.image_thread.finished.connect(lambda: self.status_label.setText("Image generation completed!"))
 
+    def generate_csv(self):
+        """Generate images from processed files in the output folder"""
+        if not self.output_dir:
+            self.status_label.setText("Please select an output folder.")
+            return
+
+        self.update_log("Starting image generation...")
+
+        # Create a QThread object
+        self.csv_thread = QThread()
+        # Create a worker object
+        self.csv_worker = FileProcessorWorker(None, None, self.output_dir, self.config, None, None, None)
+        # Move the worker to the thread
+        self.csv_worker.moveToThread(self.csv_thread)
+        # Connect signals and slots
+        self.csv_thread.started.connect(self.csv_worker.process_csv)
+        self.csv_worker.log_signal.connect(self.update_log)
+        self.csv_worker.finished_signal.connect(self.csv_thread.quit)
+        self.csv_worker.finished_signal.connect(self.csv_worker.deleteLater)
+        self.csv_thread.finished.connect(self.csv_thread.deleteLater)
+        # Start the thread
+        self.csv_thread.start()
+
+        self.csv_thread.finished.connect(lambda: self.status_label.setText("Image generation completed!"))
+
     def update_log(self, message, color="black"):
         """Add a timestamped message to the log"""
         timestamp = datetime.now().strftime('%d:%H:%M:%S')
@@ -231,6 +268,50 @@ class FileProcessorWorker(QObject):
         )
         self.finished_signal.emit()
 
+    def process_csv(self):
+        # Create the _csv directory if it doesn't exist
+        csv_dir = os.path.join(self.output_dir, "_csv")
+        os.makedirs(csv_dir, exist_ok=True)
+
+        # Create the results CSV file with timestamp in name
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
+        result_csv_path = os.path.join(csv_dir, f"{timestamp}.csv")
+
+        # Create header row for the CSV
+        header = self.config.get("csv_file_header")
+
+        self.log_callback(f"Creating CSV file: {result_csv_path}", color="blue")
+
+        # Open the result file for writing
+        with open(result_csv_path, 'w') as result_file:
+            result_file.write(f"{header}\n")
+
+            # Process each CSV file
+            for root, _, files in os.walk(self.output_dir):
+                for file in files:
+                    if file.endswith(
+                            ".csv") and "_csv" not in root and "_images" not in root:  # Skip files in the _csv directory
+                        file_path = os.path.join(root, file)
+                        self.log_callback(f"Computing features for {file_path}", color="blue")
+
+                        try:
+                            # features = self.compute_all_features(file_path)
+                            features = [random.randint(2, 15), random.randint(2, 15)]
+
+                            # Write a row with the filename and features
+                            result_row = f"{file}"
+                            for feature_value in features:
+                                result_row += f",{feature_value}"
+
+                            result_file.write(f"{result_row}\n")
+                            self.log_callback(f"Features added for {file}", color="green")
+
+                        except Exception as e:
+                            self.log_callback(f"Error processing file {file}: {str(e)}", color="red")
+
+        self.log_callback(f"Feature extraction completed. Results saved to {result_csv_path}", color="green")
+        self.finished_signal.emit()
+
     def log_callback(self, message, color="black"):
         self.log_signal.emit(message, color)
 
@@ -248,17 +329,10 @@ class ImageProcessorWorker(QObject):
     @pyqtSlot()
     def process(self):
         for root, _, files in os.walk(self.output_dir):
-
-            base_folder = os.path.basename(self.output_dir.rstrip(os.sep))
-            relative_path = os.path.relpath(root, self.output_dir)
-            log_path = f"{base_folder}/{relative_path}"
-            if relative_path == ".":
-                log_path = f"{base_folder}"
-
             for file in files:
                 if file.endswith(".csv"):
                     file_path = os.path.join(root, file)
-                    images_dir = os.path.join(self.output_dir, "images")
+                    images_dir = os.path.join(self.output_dir, "_images")
                     os.makedirs(images_dir, exist_ok=True)
                     output_path = os.path.join(images_dir, os.path.basename(file_path).replace(".csv", ".jpg"))
                     self.log_callback(f"Generating image for {file_path}", color="blue")

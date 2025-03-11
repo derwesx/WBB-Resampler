@@ -22,5 +22,7 @@
     "anteroposterior_color": "navy",
     "title_font_size": 14,
     "axis_font_size": 14,
-    "dpi": 300
+    "dpi": 300,
+
+    "csv_file_header": "filename,feature1,feature2"
 }
