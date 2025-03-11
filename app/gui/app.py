@@ -4,14 +4,16 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLab
     QRadioButton, QLineEdit
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
 from config.settings import Config
-from core.processor import FileProcessor
+from core.file_processor import FileProcessor
+from core.image_processor import ImageProcessor
 
 
-class FileProcessorApp(QWidget):
+class ProcessorApp(QWidget):
     def __init__(self, resampling_method):
         super().__init__()
         self.config = Config()
-        self.processor = FileProcessor(resampling_method)
+        self.file_processor = FileProcessor(resampling_method)
+        self.image_processor = ImageProcessor(self.config)
         self.input_dir = ""
         self.output_dir = ""
         self.init_ui()
@@ -99,6 +101,14 @@ class FileProcessorApp(QWidget):
         self.process_button.clicked.connect(self.process_files)
         layout.addWidget(self.process_button)
 
+        self.image_button = QPushButton("Generate Images")
+        self.image_button.setStyleSheet(
+            f"font-size: {self.config.get('process_button_font_size')}px; "
+            f"padding: {self.config.get('process_button_padding')}px;"
+        )
+        self.image_button.clicked.connect(self.generate_images)
+        layout.addWidget(self.image_button)
+
     def _create_status_and_log(self, layout):
         # Status label
         self.status_label = QLabel("")
@@ -144,22 +154,48 @@ class FileProcessorApp(QWidget):
         self.update_log("Starting file processing...")
 
         # Create a QThread object
-        self.thread = QThread()
+        self.file_thread = QThread()
         # Create a worker object
-        self.worker = FileProcessorWorker(self.processor, self.input_dir, self.output_dir, self.config, self.cut_option,
-                                          self.x_input.text(), self.y_input.text())
+        self.file_worker = FileProcessorWorker(self.file_processor, self.input_dir, self.output_dir, self.config,
+                                               self.cut_option,
+                                               self.x_input.text(), self.y_input.text())
         # Move the worker to the thread
-        self.worker.moveToThread(self.thread)
+        self.file_worker.moveToThread(self.file_thread)
         # Connect signals and slots
-        self.thread.started.connect(self.worker.process)
-        self.worker.log_signal.connect(self.update_log)
-        self.worker.finished_signal.connect(self.thread.quit)
-        self.worker.finished_signal.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
+        self.file_thread.started.connect(self.file_worker.process)
+        self.file_worker.log_signal.connect(self.update_log)
+        self.file_worker.finished_signal.connect(self.file_thread.quit)
+        self.file_worker.finished_signal.connect(self.file_worker.deleteLater)
+        self.file_thread.finished.connect(self.file_thread.deleteLater)
         # Start the thread
-        self.thread.start()
+        self.file_thread.start()
 
-        self.thread.finished.connect(lambda: self.status_label.setText("Processing completed!"))
+        self.file_thread.finished.connect(lambda: self.status_label.setText("Processing completed!"))
+
+    def generate_images(self):
+        """Generate images from processed files in the output folder"""
+        if not self.output_dir:
+            self.status_label.setText("Please select an output folder.")
+            return
+
+        self.update_log("Starting image generation...")
+
+        # Create a QThread object
+        self.image_thread = QThread()
+        # Create a worker object
+        self.image_worker = ImageProcessorWorker(self.image_processor, self.output_dir, self.config)
+        # Move the worker to the thread
+        self.image_worker.moveToThread(self.image_thread)
+        # Connect signals and slots
+        self.image_thread.started.connect(self.image_worker.process)
+        self.image_worker.log_signal.connect(self.update_log)
+        self.image_worker.finished_signal.connect(self.image_thread.quit)
+        self.image_worker.finished_signal.connect(self.image_worker.deleteLater)
+        self.image_thread.finished.connect(self.image_thread.deleteLater)
+        # Start the thread
+        self.image_thread.start()
+
+        self.image_thread.finished.connect(lambda: self.status_label.setText("Image generation completed!"))
 
     def update_log(self, message, color="black"):
         """Add a timestamped message to the log"""
@@ -193,6 +229,46 @@ class FileProcessorWorker(QObject):
             max_depth=self.config.max_depth,
             log_callback=self.log_callback
         )
+        self.finished_signal.emit()
+
+    def log_callback(self, message, color="black"):
+        self.log_signal.emit(message, color)
+
+
+class ImageProcessorWorker(QObject):
+    log_signal = pyqtSignal(str, str)
+    finished_signal = pyqtSignal()
+
+    def __init__(self, processor, output_dir, config):
+        super().__init__()
+        self.processor = processor
+        self.output_dir = output_dir
+        self.config = config
+
+    @pyqtSlot()
+    def process(self):
+        for root, _, files in os.walk(self.output_dir):
+
+            base_folder = os.path.basename(self.output_dir.rstrip(os.sep))
+            relative_path = os.path.relpath(root, self.output_dir)
+            log_path = f"{base_folder}/{relative_path}"
+            if relative_path == ".":
+                log_path = f"{base_folder}"
+
+            for file in files:
+                if file.endswith(".csv"):
+                    file_path = os.path.join(root, file)
+                    images_dir = os.path.join(self.output_dir, "images")
+                    os.makedirs(images_dir, exist_ok=True)
+                    output_path = os.path.join(images_dir, os.path.basename(file_path).replace(".csv", ".jpg"))
+                    self.log_callback(f"Generating image for {file_path}", color="blue")
+
+                    try:
+                        output_path = self.processor.generate_image(file_path, output_path)
+                        self.log_callback(f"Image saved to {output_path}", color="green")
+                    except Exception as e:
+                        self.log_callback(f"Error generating image: {str(e)}", color="red")
+
         self.finished_signal.emit()
 
     def log_callback(self, message, color="black"):

@@ -1,4 +1,4 @@
 # Import and expose the app class
-from .app import FileProcessorApp
+from .app import ProcessorApp
 
-__all__ = ['FileProcessorApp']
+__all__ = ['ProcessorApp']

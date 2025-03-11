@@ -11,5 +11,16 @@
     "process_button_font_size": 18,
     "process_button_padding": 12,
     "log_text_read_only": true,
-    "window_geometry": [100, 100, 800, 600]
+    "window_geometry": [100, 100, 800, 600],
+
+    "figure_width": 10,
+    "figure_height": 8,
+    "plot_line_style": "-",
+    "plot_line_width": 1.5,
+    "trajectory_color": "navy",
+    "mediolateral_color": "navy",
+    "anteroposterior_color": "navy",
+    "title_font_size": 14,
+    "axis_font_size": 14,
+    "dpi": 300
 }

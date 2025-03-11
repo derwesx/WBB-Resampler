@@ -17,8 +17,8 @@ class FileProcessor:
             log_callback(f"Cutting method chosen: {cut_option}", color="blue")
             log_callback(f"X seconds: {x}, Y seconds: {y}", color="blue")
             log_callback("Starting processing:")
-        for root, _, files in os.walk(input_dir):
 
+        for root, _, files in os.walk(input_dir):
             base_folder = os.path.basename(input_dir.rstrip(os.sep))
             relative_path = os.path.relpath(root, input_dir)
             log_path = f"{base_folder}/{relative_path}"
@@ -50,7 +50,7 @@ class FileProcessor:
         if relative_path == ".":
             log_path = f"{base_folder}"
         output_subdir = os.path.join(output_dir, os.path.dirname(relative_path).replace(os.sep, '-'))
-        output_filename = relative_path.replace(os.sep, '-')
+        output_filename = relative_path.replace(os.sep, '-') + ".csv"
         output_path = os.path.join(output_subdir, output_filename)
 
         # Skip if already processed
@@ -68,7 +68,8 @@ class FileProcessor:
 
             # Process the file
             time, signal = parse_wbb_file(file_path)
-            resampled_time, resampled_signal, empty_windows, skipped_time = self.resampling_method.resample(time, signal)
+            resampled_time, resampled_signal, empty_windows, skipped_time = self.resampling_method.resample(time,
+                                                                                                            signal)
 
             # Apply cutting logic
             if log_callback:
@@ -76,14 +77,14 @@ class FileProcessor:
                 log_callback(f"Original time range: {resampled_time[0]:.2f} to {resampled_time[-1]:.2f}", color="blue")
             if cut_option == 1:
                 # Cut first X seconds and last Y seconds
-                mask = (resampled_time >= x+resampled_time[0]) & (resampled_time <= (resampled_time[-1] - y))
+                mask = (resampled_time >= x + resampled_time[0]) & (resampled_time <= (resampled_time[-1] - y))
                 resampled_time = resampled_time[mask]
                 resampled_signal = resampled_signal[mask]
                 if log_callback:
                     log_callback(f"Cutting first {x:.2f} seconds and last {y:.2f} seconds", color="blue")
             elif cut_option == 2:
                 # Cut first X seconds and take Y seconds after
-                mask = (resampled_time >= x+resampled_time[0]) & (resampled_time <= (x + resampled_time[0] + y))
+                mask = (resampled_time >= x + resampled_time[0]) & (resampled_time <= (x + resampled_time[0] + y))
                 resampled_time = resampled_time[mask]
                 resampled_signal = resampled_signal[mask]
                 if log_callback:

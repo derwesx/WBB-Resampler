@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 from core.resampling import SWARII
-from gui.app import FileProcessorApp
+from gui.app import ProcessorApp
 from config.settings import Config
 
 
@@ -19,9 +19,8 @@ def main():
     )
 
     # Create and show the GUI
-    window = FileProcessorApp(resampling_method)
+    window = ProcessorApp(resampling_method)
     window.show()
-
     # Run the application
     sys.exit(app.exec_())
 
