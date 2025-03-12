@@ -1,11 +1,19 @@
-@echo off
 
-:: Check if pip is installed
-python -m ensurepip --upgrade
+REM Upgrade pip
+echo Upgrading pip...
+python -m pip install --upgrade pip
 
-:: Install PyQt5 and other dependencies
-echo Installing required Python packages...
-python -m pip install -r requirements.txt
+REM Install required packages from requirements.txt
+echo Installing required packages...
+pip install -r requirements.txt
 
-echo Installation complete for Windows!
+if %ERRORLEVEL% NEQ 0 (
+    echo Failed to install required Python packages.
+    exit /b 1
+) else (
+    echo Required Python packages installed successfully.
+)
+
+echo Installation completed successfully!
+
 pause

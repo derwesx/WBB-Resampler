@@ -67,8 +67,14 @@ install_pip() {
 install_requirements() {
     echo "Installing required Python packages..."
 
-    # Install packages using pip
-    python3 -m pip install PyQt5 numpy
+    # Create virtual environment (optional but recommended)
+    echo "Creating virtual environment..."
+    python3 -m venv venv
+    source venv/bin/activate
+
+    # Install packages using pip from requirements.txt
+    python3 -m pip install --upgrade pip
+    python3 -m pip install -r requirements.txt
 
     if [ $? -eq 0 ]; then
         echo "Required Python packages installed successfully."
