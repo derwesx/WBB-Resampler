@@ -1,9 +1,15 @@
 import os
 import random
+
+import numpy as np
+import pandas as pd
 from datetime import datetime
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFileDialog, QTextEdit, \
     QRadioButton, QLineEdit
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
+
+from adapted.descriptors import compute_all_features
+from adapted.stabilogram.stato import Stabilogram
 from config.settings import Config
 from core.file_processor import FileProcessor
 from core.image_processor import ImageProcessor
@@ -295,13 +301,19 @@ class FileProcessorWorker(QObject):
                         self.log_callback(f"Computing features for {file_path}", color="blue")
 
                         try:
-                            # features = self.compute_all_features(file_path)
-                            features = [random.randint(2, 15), random.randint(2, 15)]
+                            df = pd.read_csv(str(file_path), sep=r'\s+', skiprows=1,
+                                             names=['Time', 'X', 'Y'])
+                            stato = Stabilogram()
+                            stato.from_array(array=np.array([df['X'], df['Y']]).T,
+                                             original_frequency=self.config.get("desired_frequency"), resample=False)
+                            sway_density_radius = 0.3  # 3 mm
+                            params_dic = {"sway_density_radius": sway_density_radius}
+                            features = compute_all_features(stato, params_dic=params_dic)
 
                             # Write a row with the filename and features
                             result_row = f"{file}"
-                            for feature_value in features:
-                                result_row += f",{feature_value}"
+                            for feature_name in features:
+                                result_row += f",{features[feature_name]}"
 
                             result_file.write(f"{result_row}\n")
                             self.log_callback(f"Features added for {file}", color="green")
