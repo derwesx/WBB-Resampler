@@ -1,18 +1,16 @@
 import os
-import random
-
-import numpy as np
-import pandas as pd
 from datetime import datetime
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFileDialog, QTextEdit, \
-    QRadioButton, QLineEdit
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
+    QFileDialog, QTextEdit, QRadioButton, QLineEdit
+)
+from PyQt5.QtCore import QThread
 
-from adapted.descriptors import compute_all_features
-from adapted.stabilogram.stato import Stabilogram
-from config.settings import Config
 from core.file_processor import FileProcessor
 from core.image_processor import ImageProcessor
+from workers.file_worker import FileProcessorWorker
+from workers.image_worker import ImageProcessorWorker
+from utils.config import Config
 
 
 class ProcessorApp(QWidget):
@@ -23,6 +21,7 @@ class ProcessorApp(QWidget):
         self.image_processor = ImageProcessor(self.config)
         self.input_dir = ""
         self.output_dir = ""
+        self.cut_option = 0  # Default to no cutting
         self.init_ui()
 
     def init_ui(self):
@@ -166,8 +165,6 @@ class ProcessorApp(QWidget):
                 f"Output: ...{self.output_dir[-self.config.max_text_length:] if len(self.output_dir) > self.config.max_text_length else self.output_dir}")
             self.update_log(f"Default: {self.output_dir}", color="red")
             self.update_log(f"New output folder: {os.path.abspath(self.output_dir)}", color="red")
-        # Optional: Clear previous logs
-        # self.log_text.clear()
 
         self.update_log("Starting file processing...")
 
@@ -216,12 +213,12 @@ class ProcessorApp(QWidget):
         self.image_thread.finished.connect(lambda: self.status_label.setText("Image generation completed!"))
 
     def generate_csv(self):
-        """Generate images from processed files in the output folder"""
+        """Generate summary CSV file from processed data"""
         if not self.output_dir:
             self.status_label.setText("Please select an output folder.")
             return
 
-        self.update_log("Starting image generation...")
+        self.update_log("Starting CSV generation...")
 
         # Create a QThread object
         self.csv_thread = QThread()
@@ -238,124 +235,10 @@ class ProcessorApp(QWidget):
         # Start the thread
         self.csv_thread.start()
 
-        self.csv_thread.finished.connect(lambda: self.status_label.setText("Image generation completed!"))
+        self.csv_thread.finished.connect(lambda: self.status_label.setText("CSV generation completed!"))
 
     def update_log(self, message, color="black"):
         """Add a timestamped message to the log"""
         timestamp = datetime.now().strftime('%d:%H:%M:%S')
         log_message = f'[{timestamp}] <span style="color:{color}">{message}</span>'
         self.log_text.append(log_message)
-
-
-class FileProcessorWorker(QObject):
-    log_signal = pyqtSignal(str, str)
-    finished_signal = pyqtSignal()
-
-    def __init__(self, processor, input_dir, output_dir, config, cut_option, x, y):
-        super().__init__()
-        self.processor = processor
-        self.input_dir = input_dir
-        self.output_dir = output_dir
-        self.config = config
-        self.cut_option = cut_option
-        self.x = float(x) if x else 0
-        self.y = float(y) if y else 0
-
-    @pyqtSlot()
-    def process(self):
-        self.processor.process_files(
-            self.input_dir,
-            self.output_dir,
-            self.cut_option,
-            self.x,
-            self.y,
-            max_depth=self.config.max_depth,
-            log_callback=self.log_callback
-        )
-        self.finished_signal.emit()
-
-    def process_csv(self):
-        # Create the _csv directory if it doesn't exist
-        csv_dir = os.path.join(self.output_dir, "_csv")
-        os.makedirs(csv_dir, exist_ok=True)
-
-        # Create the results CSV file with timestamp in name
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
-        result_csv_path = os.path.join(csv_dir, f"{timestamp}.csv")
-
-        # Create header row for the CSV
-        header = self.config.get("csv_file_header")
-
-        self.log_callback(f"Creating CSV file: {result_csv_path}", color="blue")
-
-        # Open the result file for writing
-        with open(result_csv_path, 'w') as result_file:
-            result_file.write(f"{header}\n")
-
-            # Process each CSV file
-            for root, _, files in os.walk(self.output_dir):
-                for file in files:
-                    if file.endswith(
-                            ".csv") and "_csv" not in root and "_images" not in root:  # Skip files in the _csv directory
-                        file_path = os.path.join(root, file)
-                        self.log_callback(f"Computing features for {file_path}", color="blue")
-
-                        try:
-                            df = pd.read_csv(str(file_path), sep=r'\s+', skiprows=1,
-                                             names=['Time', 'X', 'Y'])
-                            stato = Stabilogram()
-                            stato.from_array(array=np.array([df['X'], df['Y']]).T,
-                                             original_frequency=self.config.get("desired_frequency"), resample=False)
-                            sway_density_radius = 0.3  # 3 mm
-                            params_dic = {"sway_density_radius": sway_density_radius}
-                            features = compute_all_features(stato, params_dic=params_dic)
-
-                            # Write a row with the filename and features
-                            result_row = f"{file}"
-                            for feature_name in features:
-                                result_row += f",{features[feature_name]}"
-
-                            result_file.write(f"{result_row}\n")
-                            self.log_callback(f"Features added for {file}", color="green")
-
-                        except Exception as e:
-                            self.log_callback(f"Error processing file {file}: {str(e)}", color="red")
-
-        self.log_callback(f"Feature extraction completed. Results saved to {result_csv_path}", color="green")
-        self.finished_signal.emit()
-
-    def log_callback(self, message, color="black"):
-        self.log_signal.emit(message, color)
-
-
-class ImageProcessorWorker(QObject):
-    log_signal = pyqtSignal(str, str)
-    finished_signal = pyqtSignal()
-
-    def __init__(self, processor, output_dir, config):
-        super().__init__()
-        self.processor = processor
-        self.output_dir = output_dir
-        self.config = config
-
-    @pyqtSlot()
-    def process(self):
-        for root, _, files in os.walk(self.output_dir):
-            for file in files:
-                if file.endswith(".csv"):
-                    file_path = os.path.join(root, file)
-                    images_dir = os.path.join(self.output_dir, "_images")
-                    os.makedirs(images_dir, exist_ok=True)
-                    output_path = os.path.join(images_dir, os.path.basename(file_path).replace(".csv", ".jpg"))
-                    self.log_callback(f"Generating image for {file_path}", color="blue")
-
-                    try:
-                        output_path = self.processor.generate_image(file_path, output_path)
-                        self.log_callback(f"Image saved to {output_path}", color="green")
-                    except Exception as e:
-                        self.log_callback(f"Error generating image: {str(e)}", color="red")
-
-        self.finished_signal.emit()
-
-    def log_callback(self, message, color="black"):
-        self.log_signal.emit(message, color)
