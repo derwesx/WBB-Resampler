@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from .file_parser import parse_wbb_file
+from utils.wbb_file_parser import parse_wbb_file
 
 
 class FileProcessor:
