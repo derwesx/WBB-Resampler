@@ -1,6 +1,6 @@
 # Import and expose core components
 from .file_processor import FileProcessor
-from .file_parser import parse_wbb_file
-from .resampling import SWARII
+from utils.wbb_file_parser import parse_wbb_file
+from utils.resampling import SWARII
 
-__all__ = ['FileProcessor', 'parse_wbb_file', 'SWARII']
+__all__ = ['FileProcessor']
