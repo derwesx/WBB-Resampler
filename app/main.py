@@ -1,8 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from core.resampling import SWARII
+from utils.resampling import SWARII
 from gui.app import ProcessorApp
-from config.settings import Config
+from utils.config import Config
 
 
 def main():
