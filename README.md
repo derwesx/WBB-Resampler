@@ -33,8 +33,6 @@ Before you install the application, make sure you have the following:
 3. Run the installation script:
 
 ```bash
-#!/bin/bash
-
 # Detect the OS and install accordingly
 OS="$(uname -s)"
 
